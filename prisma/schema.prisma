@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String?
+  description String?
+  price       Decimal  @db.Decimal(12, 2)
+  imageEmoji  String   @default("📦")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // search_vector (kolom tsvector generated) sengaja TIDAK dimodelkan di
+  // sini - dikelola lewat raw SQL (prisma/sql/001_setup_search.sql) karena
+  // Prisma Client tidak mendukung generated column secara deklaratif.
+  // Lihat README bagian "Setup pencarian" untuk detail.
+
+  @@index([categoryId])
+  @@index([price])
+}
